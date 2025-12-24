@@ -204,6 +204,29 @@ st.markdown("""
         visibility: visible !important;
         display: block !important;
     }
+    
+    /* Sidebar Navigation Buttons - Netflix Red Theme */
+    [data-testid="stSidebarNav"] a {
+        color: #E50914 !important;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    [data-testid="stSidebarNav"] a:hover {
+        color: #ff1a1a !important;
+        background-color: rgba(229, 9, 20, 0.1) !important;
+    }
+    [data-testid="stSidebarNav"] a[aria-current="page"] {
+        color: #E50914 !important;
+        background-color: rgba(229, 9, 20, 0.15) !important;
+        border-left: 3px solid #E50914 !important;
+        font-weight: 700;
+    }
+    [data-testid="stSidebarNav"] ul {
+        padding-left: 0.5rem;
+    }
+    [data-testid="stSidebarNav"] li {
+        margin: 0.25rem 0;
+    }
     </style>
     """, unsafe_allow_html=True)
 
