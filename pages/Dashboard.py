@@ -355,6 +355,152 @@ def create_sankey_diagram(df_filtered):
     
     return fig
 
+def get_country_iso_mapping():
+    """Map country names to ISO-3 codes for choropleth maps."""
+    country_mapping = {
+        'United States': 'USA',
+        'India': 'IND',
+        'United Kingdom': 'GBR',
+        'Canada': 'CAN',
+        'France': 'FRA',
+        'Japan': 'JPN',
+        'Spain': 'ESP',
+        'South Korea': 'KOR',
+        'Germany': 'DEU',
+        'Australia': 'AUS',
+        'Mexico': 'MEX',
+        'Brazil': 'BRA',
+        'Italy': 'ITA',
+        'Turkey': 'TUR',
+        'Argentina': 'ARG',
+        'Netherlands': 'NLD',
+        'Poland': 'POL',
+        'Sweden': 'SWE',
+        'Belgium': 'BEL',
+        'Norway': 'NOR',
+        'Denmark': 'DNK',
+        'South Africa': 'ZAF',
+        'Thailand': 'THA',
+        'Philippines': 'PHL',
+        'Indonesia': 'IDN',
+        'Malaysia': 'MYS',
+        'Singapore': 'SGP',
+        'New Zealand': 'NZL',
+        'Ireland': 'IRL',
+        'Greece': 'GRC',
+        'Portugal': 'PRT',
+        'Switzerland': 'CHE',
+        'Austria': 'AUT',
+        'Finland': 'FIN',
+        'Czech Republic': 'CZE',
+        'Hungary': 'HUN',
+        'Romania': 'ROU',
+        'Chile': 'CHL',
+        'Colombia': 'COL',
+        'Peru': 'PER',
+        'Venezuela': 'VEN',
+        'Ecuador': 'ECU',
+        'Egypt': 'EGY',
+        'Israel': 'ISR',
+        'United Arab Emirates': 'ARE',
+        'Saudi Arabia': 'SAU',
+        'Lebanon': 'LBN',
+        'Morocco': 'MAR',
+        'Nigeria': 'NGA',
+        'Kenya': 'KEN',
+        'Ghana': 'GHA',
+        'Russia': 'RUS',
+        'China': 'CHN',
+        'Taiwan': 'TWN',
+        'Hong Kong': 'HKG',
+        'Vietnam': 'VNM',
+        'Pakistan': 'PAK',
+        'Bangladesh': 'BGD',
+        'Sri Lanka': 'LKA',
+        'Nepal': 'NPL',
+    }
+    return country_mapping
+
+def create_geospatial_map(df_filtered):
+    """Create a choropleth map showing content distribution by country."""
+    # Get country counts
+    country_counts = df_filtered['primary_country'].value_counts().reset_index()
+    country_counts.columns = ['country', 'count']
+    
+    # Remove 'Unknown' country
+    country_counts = country_counts[country_counts['country'] != 'Unknown']
+    
+    if len(country_counts) == 0:
+        return None
+    
+    # Get country mapping
+    country_mapping = get_country_iso_mapping()
+    
+    # Map country names to ISO codes
+    country_counts['iso_code'] = country_counts['country'].map(country_mapping)
+    
+    # Filter to countries with valid ISO codes
+    country_counts = country_counts.dropna(subset=['iso_code'])
+    
+    if len(country_counts) == 0:
+        return None
+    
+    # Sort by country name to ensure consistent ordering
+    country_counts = country_counts.sort_values('country').reset_index(drop=True)
+    
+    # Create choropleth map using graph objects for better hover control
+    fig = go.Figure(data=go.Choropleth(
+        locations=country_counts['iso_code'],
+        z=country_counts['count'],
+        text=country_counts['country'],
+        colorscale=[[0, '#1a1a1a'], [0.2, '#2a2a2a'], [0.4, '#4a0000'], 
+                    [0.6, '#8B0000'], [0.8, '#B20710'], [1, '#E50914']],
+        autocolorscale=False,
+        reversescale=False,
+        marker_line_color='#404040',
+        marker_line_width=0.5,
+        colorbar=dict(
+            title=dict(text="Titles", font=dict(color='#ffffff', family='Helvetica Neue')),
+            tickfont=dict(color='#ffffff', family='Helvetica Neue'),
+            bgcolor='#1f1f1f',
+            bordercolor='#404040',
+            borderwidth=1
+        ),
+        hovertemplate='<b>%{text}</b><br>Number of Titles: %{z:,}<extra></extra>',
+        locationmode='ISO-3'
+    ))
+    
+    fig.update_layout(
+        height=600,
+        plot_bgcolor='#141414',
+        paper_bgcolor='#141414',
+        font=dict(color='#ffffff', family='Helvetica Neue', size=12),
+        geo=dict(
+            bgcolor='#141414',
+            lakecolor='#1f1f1f',
+            landcolor='#2a2a2a',
+            showlakes=True,
+            showland=True,
+            showocean=True,
+            oceancolor='#1a1a1a',
+            coastlinecolor='#404040',
+            countrycolor='#333333',
+            lonaxis=dict(showgrid=False),
+            lataxis=dict(showgrid=False),
+            projection_type='natural earth'
+        ),
+        title=dict(
+            text="Global Content Distribution by Country",
+            font=dict(size=20, color='#E50914', family='Helvetica Neue'),
+            x=0.5,
+            xanchor='center',
+            pad=dict(b=20)
+        ),
+        margin=dict(l=0, r=0, t=60, b=0)
+    )
+    
+    return fig
+
 def create_treemap(df_filtered):
     """Create a clean treemap showing hierarchical data: Country -> Genre -> Type."""
     # Filter to top countries and genres for clarity
@@ -500,19 +646,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Add the floating elements button
-st.markdown("""
-<div style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
-    <button onclick="document.querySelector('.sidebar .css-1d391kg').click()" 
-            style="background: rgba(229, 9, 20, 0.8); color: white; border: none; 
-                   padding: 10px 15px; border-radius: 5px; cursor: pointer;
-                   font-weight: 600; font-size: 0.9rem; box-shadow: 0 2px 8px rgba(229, 9, 20, 0.4);
-                   transition: all 0.3s ease;">
-        ☰ Filters
-    </button>
-</div>
-""", unsafe_allow_html=True)
-
 # Sidebar filters - Netflix style
 with st.sidebar:
     st.markdown("### FILTERS")
@@ -552,10 +685,12 @@ df_filtered = df.copy()
 if selected_type != 'All':
     df_filtered = df_filtered[df_filtered['type'] == selected_type]
 
-df_filtered = df_filtered[
-    (df_filtered['year_added'] >= year_range[0]) & 
-    (df_filtered['year_added'] <= year_range[1])
-]
+# Apply year filter only if year_added column has non-null values
+if not df_filtered['year_added'].isna().all():
+    df_filtered = df_filtered[
+        (df_filtered['year_added'] >= year_range[0]) & 
+        (df_filtered['year_added'] <= year_range[1])
+    ]
 
 if selected_country != 'All':
     df_filtered = df_filtered[df_filtered['primary_country'] == selected_country]
@@ -770,6 +905,93 @@ with col2:
             """)
     else:
         st.info("Insufficient data for treemap")
+
+st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
+
+# GEOSPATIAL VISUALIZATION
+st.markdown('<div class="section-box">', unsafe_allow_html=True)
+st.markdown("### Geospatial Analysis")
+
+st.markdown("#### Global Content Distribution Map")
+
+# Interpretation guide
+with st.expander("How to Read This Map", expanded=False):
+    st.markdown("""
+    **Visual Guide:**
+    - **Color Intensity**: Darker red indicates more content from that country
+    - **Hover**: Move your cursor over any country to see exact title count
+    - **Scale**: The color scale ranges from dark (few titles) to bright red (many titles)
+    
+    **Key Insights:**
+    - Identify geographic concentration of content production
+    - Understand global content distribution patterns
+    - Spot regions with high or low content representation
+    - Analyze international content strategy and market focus
+    
+    **What to Look For:**
+    - **Bright red countries**: Major content producers (e.g., United States, India)
+    - **Dark countries**: Limited content representation
+    - **Regional patterns**: Clusters of content-producing regions
+    - **Geographic gaps**: Regions with potential for content expansion
+    """)
+
+# Create and display geospatial map
+geospatial_fig = create_geospatial_map(df_filtered)
+
+if geospatial_fig:
+    st.plotly_chart(geospatial_fig, use_container_width=True, config={'displayModeBar': False})
+    
+    # Insights
+    with st.expander("Insights - Global Content Distribution"):
+        country_counts = df_filtered[df_filtered['primary_country'] != 'Unknown']['primary_country'].value_counts()
+        
+        if len(country_counts) > 0:
+            top_country = country_counts.index[0]
+            top_count = country_counts.values[0]
+            top_3_total = country_counts.head(3).sum()
+            total_countries = len(country_counts)
+            total_pct = (top_3_total / len(df_filtered) * 100) if len(df_filtered) > 0 else 0
+            
+            st.write(f"""
+            - **Top Content Producer**: {top_country} with {int(top_count)} titles
+            - **Top 3 Countries**: Combined {int(top_3_total)} titles ({total_pct:.1f}% of total)
+            - **Geographic Diversity**: Content from {total_countries} different countries
+            - **Global Reach**: {'High' if total_countries > 50 else 'Moderate' if total_countries > 20 else 'Limited'} geographic diversity
+            - **Market Concentration**: {'High' if total_pct > 60 else 'Moderate' if total_pct > 40 else 'Low'} concentration in top 3 countries
+            - **Strategic Insight**: Identify opportunities for content expansion in underrepresented regions
+            - **International Strategy**: Balance between major markets and emerging content-producing regions
+            """)
+        else:
+            st.info("No country data available for geospatial analysis.")
+else:
+    st.info("Insufficient data for geospatial visualization. Please adjust filters to include country data.")
+
+# Additional geographic insights
+st.markdown("#### Geographic Content Statistics")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    country_counts = df_filtered[df_filtered['primary_country'] != 'Unknown']['primary_country'].value_counts()
+    unique_countries = len(country_counts)
+    st.metric("Countries Represented", f"{unique_countries}")
+
+with col2:
+    if len(country_counts) > 0:
+        top_country = country_counts.index[0]
+        top_count = country_counts.values[0]
+        st.metric("Top Producer", f"{top_country[:15]}...", f"{int(top_count)} titles")
+    else:
+        st.metric("Top Producer", "N/A")
+
+with col3:
+    if len(country_counts) > 0:
+        top_5_total = country_counts.head(5).sum()
+        top_5_pct = (top_5_total / len(df_filtered) * 100) if len(df_filtered) > 0 else 0
+        st.metric("Top 5 Countries Share", f"{top_5_pct:.1f}%", f"{int(top_5_total)} titles")
+    else:
+        st.metric("Top 5 Countries Share", "N/A")
 
 st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
